@@ -1,50 +1,44 @@
 
 import java.io.BufferedInputStream;
 import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.ArrayList;
 import java.util.List;
 
 public class ChatServer implements Runnable {
 	private ServerSocket service = null;
-	private Socket socket = null;
-	private DataInputStream streamIn = null;
+	private ChatServerHelper helper = null;
 	private Thread thread = null;
 
 	public ChatServer(int portNum) {
 		try {
 			System.out.println("Creating a Chat Server on portNum: " + portNum);
 			service = new ServerSocket(portNum);
+			service.setSoTimeout(1000);
 			System.out.println("Chat Server Started");
 			System.out.println("Waiting for a client");
 			System.out.println(service.getInetAddress());
 			System.out.println("Success!");
+			helper = new ChatServerHelper(service);
 			start();
 		} catch (IOException e) {
 			System.out.println(e);
 		}
 	}
-
+	
 	private void start() {
 		if (thread == null) {
 			thread = new Thread(this);
 			thread.start();
 		}
 	}
-	
-	private void open() throws IOException {
-		this.streamIn = new DataInputStream(new BufferedInputStream(
-				this.socket.getInputStream()));
-	}
 
 	private void close() throws IOException {
-		if (streamIn != null) {
-			streamIn.close();
-		}
-		if (socket != null) {
-			socket.close();
-		}
+		helper.close();
 		if (service != null) {
 			service.close();
 		}
@@ -61,16 +55,47 @@ public class ChatServer implements Runnable {
 	public void run() {
 		// TODO Auto-generated method stub
 		try {
-			socket = service.accept();
-			open();
 			boolean done = false;
 			while (!done) {
 				try {
-					String curLine = streamIn.readUTF();
-					System.out.println(curLine);
-					done = curLine.equals(".bye");
+					List<Connection> conns = helper.getConnections();
+					System.out.println(done);
+					synchronized(conns){
+						List<String> text = new ArrayList<String>();
+						for(int i=0; i<conns.size(); i++){
+							Connection curr = conns.get(i);
+							String line = "";
+							if(curr == null || curr.isSocketClosed()){
+								System.out.println("Socket is closed");
+								conns.set(i, null);
+							} else {
+								DataInputStream input = curr.getInputStream();
+								line = input.readUTF();
+								System.out.println(line);
+							}
+							text.add(line);
+							System.out.println(text);
+						}
+						for(int i=0; i<conns.size(); i++){
+							Connection curr = conns.get(i);
+							if(curr == null){
+								
+							} else {
+								DataOutputStream output = curr.getOutputStream();
+								for(int j=0; j<conns.size(); j++){
+									if(j!=i){
+										output.writeUTF(text.get(j));
+										output.writeUTF("\n");
+										output.flush();
+									}
+								}
+							}
+						}
+					}
+
 				} catch (IOException ioe) {
 					done = true;
+					System.out.println("IOException... exiting");
 				}
 			}
 			close();

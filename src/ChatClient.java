@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.Socket;
 
@@ -11,6 +12,7 @@ public class ChatClient {
 	private Socket mySocket = null;
 	private BufferedReader inputStream = null;
 	private DataOutputStream outputStream = null;
+	private BufferedReader otherInputStream = null;
 	private String endLine = ".bye";
 	
 	public ChatClient(String serverName, int portNum){
@@ -34,6 +36,10 @@ public class ChatClient {
 				line = this.inputStream.readLine();
 				outputStream.writeUTF(line);
 				outputStream.flush();
+				String inline = otherInputStream.readLine();
+				if(!inline.equals("")){
+					System.out.println(inline);
+				}
 			} catch(IOException ioe){
 				System.out.println("Error: " + ioe.getMessage());
 			}
@@ -43,6 +49,8 @@ public class ChatClient {
 	private void start() throws IOException{
 		inputStream = new BufferedReader(new InputStreamReader(System.in));
 		outputStream = new DataOutputStream(this.mySocket.getOutputStream());
+		otherInputStream = new BufferedReader(
+				new InputStreamReader(this.mySocket.getInputStream()));
 	}
 	
 	private void stop(){
