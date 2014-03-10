@@ -36,9 +36,11 @@ public class ChatClient {
 				line = this.inputStream.readLine();
 				outputStream.writeUTF(line);
 				outputStream.flush();
-				String inline = otherInputStream.readLine();
-				if(!inline.equals("")){
-					System.out.println(inline);
+				synchronized(otherInputStream){
+					String inline = otherInputStream.readLine();
+					if(!inline.equals("")){
+						System.out.println(inline);
+					}
 				}
 			} catch(IOException ioe){
 				System.out.println("Error: " + ioe.getMessage());

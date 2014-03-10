@@ -8,46 +8,54 @@ import java.util.List;
 
 public class ChatServerHelper implements Runnable{
 
-	public Thread thread = null;
+	private Thread thread = null;
 	private List<Connection> connList = null;
 	private ServerSocket service = null;
-	private boolean stopServer = false;
 	
 	public ChatServerHelper(ServerSocket service){
 		this.service = service;
 		connList = new ArrayList<Connection>();
-		if (thread == null) {
-			thread = new Thread(this);
-			thread.start();
-		}
+		this.start();
 	}
 	
 	@Override
 	public void run() {
 		// TODO Auto-generated method stub
-		while (!stopServer) {
 			try {
 				System.out.println("Looking for new socket");
 				Socket newSocket = service.accept();
 				Connection newConnection = new Connection(newSocket);
-				synchronized (connList) {
-					connList.add(newConnection);
-				}
+				connList.add(newConnection);
 			} catch (SocketTimeoutException e) {
 				
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-		}
+		System.out.println("Done looking for new socket");
 	}
 	
-	public List<Connection> getConnections(){
+	public synchronized List<Connection> getConnections(){
 		return connList;
 	}
 	
-	public void close(){
-		stopServer = true;
+	public void interrupt(){
+		if(thread!=null){
+			thread.interrupt();
+		}
+	}
+	
+	public void join() throws InterruptedException{
+		if(thread!=null){
+			thread.join();
+		}
+	}
+	
+	public void start(){
+		if (thread == null || !thread.isAlive()) {
+			thread = new Thread(this);
+			thread.start();
+		}
 	}
 
 }

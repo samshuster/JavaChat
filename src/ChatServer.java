@@ -38,7 +38,7 @@ public class ChatServer implements Runnable {
 	}
 
 	private void close() throws IOException {
-		helper.close();
+		helper.interrupt();
 		if (service != null) {
 			service.close();
 		}
@@ -54,13 +54,13 @@ public class ChatServer implements Runnable {
 	 */
 	public void run() {
 		// TODO Auto-generated method stub
+		boolean done = false;
 		try {
-			boolean done = false;
 			while (!done) {
-				try {
+					System.out.println("Waiting...");
+					helper.join();
 					List<Connection> conns = helper.getConnections();
-					System.out.println(done);
-					synchronized(conns){
+					System.out.println(conns);
 						List<String> text = new ArrayList<String>();
 						for(int i=0; i<conns.size(); i++){
 							Connection curr = conns.get(i);
@@ -70,8 +70,8 @@ public class ChatServer implements Runnable {
 								conns.set(i, null);
 							} else {
 								DataInputStream input = curr.getInputStream();
-								line = input.readUTF();
-								System.out.println(line);
+								//line = input.readUTF();
+								//System.out.println(line);
 							}
 							text.add(line);
 							System.out.println(text);
@@ -91,18 +91,16 @@ public class ChatServer implements Runnable {
 								}
 							}
 						}
-					}
-
-				} catch (IOException ioe) {
-					done = true;
-					System.out.println("IOException... exiting");
-				}
+					helper.start();
 			}
 			close();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+			} catch (IOException ioe) {
+				done = true;
+				System.out.println("IOException... exiting");
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 	}
 
 	public static void main(String args[]) {

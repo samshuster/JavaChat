@@ -22,11 +22,11 @@ public class Connection {
 		}
 	}
 	
-	public DataInputStream getInputStream(){
+	public synchronized DataInputStream getInputStream(){
 		return streamIn;
 	}
 	
-	public DataOutputStream getOutputStream(){
+	public synchronized DataOutputStream getOutputStream(){
 		return streamOut;
 	}
 	
